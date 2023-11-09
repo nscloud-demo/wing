@@ -31,10 +31,7 @@ jobs:
     name: "Build"
     timeout-minutes: 30
     runs-on:
-      - nscloud-ubuntu-22.04-amd64-8x16-with-cache
-      - nscloud-exp-runner-tool-cache-50gb
-      - nscloud-cache-size-50gb
-      - nscloud-cache-tag-gha-demo-wing
+      - nscloud-ubuntu-22.04-amd64-8x16
     outputs:
       version: ${{ fromJson(steps.changelog.outputs.data).newVersion }}
       last-version: ${{ fromJson(steps.changelog.outputs.data).lastVersion }}
@@ -66,14 +63,11 @@ jobs:
           inherit-toolchain: true
           cache: false
 
-      - name: Setup runner cache
-        uses: namespacelabs/nscloud-cache-action@v1
+      - name: Setup Cargo Cache
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.npm
-            ./node_modules
-            ~/.cargo
-            ./target
+          # Don't save cache here, to avoid thrashing with test job
+          save-if: false
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
@@ -107,10 +101,7 @@ jobs:
     name: Test
     timeout-minutes: 30
     runs-on:
-      - nscloud-ubuntu-22.04-amd64-8x16-with-cache
-      - nscloud-exp-runner-tool-cache-50gb
-      - nscloud-cache-size-50gb
-      - nscloud-cache-tag-gha-demo-wing
+      - nscloud-ubuntu-22.04-amd64-8x16
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -132,14 +123,8 @@ jobs:
           inherit-toolchain: true
           cache: false
 
-      - name: Setup runner cache
-        uses: namespacelabs/nscloud-cache-action@v1
-        with:
-          path: |
-            ~/.npm
-            ./node_modules
-            ~/.cargo
-            ./target
+      - name: Setup Cargo Cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
@@ -166,10 +151,7 @@ jobs:
     name: Benchmark
     if: needs.build.outputs.bench-changed == 'true' || contains(github.event.pull_request.labels.*.name, '🧪 pr/e2e-full')
     runs-on:
-      - nscloud-ubuntu-22.04-amd64-8x16-with-cache
-      - nscloud-exp-runner-tool-cache-50gb
-      - nscloud-cache-size-50gb
-      - nscloud-cache-tag-gha-demo-wing
+      - nscloud-ubuntu-22.04-amd64-8x16
     needs:
       - build
     steps:
