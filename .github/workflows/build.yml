@@ -31,7 +31,8 @@ jobs:
     name: "Build"
     timeout-minutes: 30
     runs-on:
-      - nscloud-ubuntu-22.04-amd64-8x16
+      - ubuntu-latest
+      # - nscloud-ubuntu-22.04-amd64-8x16
     outputs:
       version: ${{ fromJson(steps.changelog.outputs.data).newVersion }}
       last-version: ${{ fromJson(steps.changelog.outputs.data).lastVersion }}
@@ -88,12 +89,6 @@ jobs:
           GENERATE_VERSION: ${{ github.event_name != 'push' || github.repository != 'winglang/wing' }}
         run: pnpm bump-pack
 
-      - name: Debug
-        run: |
-          pnpm install --global cdktf-cli@0.17.0
-          which cdktf
-          cdktf --version
-
       - name: Build and Package
         run: pnpm package:ci
         env:
@@ -109,7 +104,8 @@ jobs:
     name: Test
     timeout-minutes: 30
     runs-on:
-      - nscloud-ubuntu-22.04-amd64-8x16
+      - ubuntu-latest
+      # - nscloud-ubuntu-22.04-amd64-8x16
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -211,14 +207,17 @@ jobs:
 
   e2e-test:
     name: "E2E / ${{ matrix.runner }} + Node${{ matrix.node }} [${{ matrix.shard }}]"
-    runs-on: "${{ matrix.runner }}-latest"
+    runs-on: ${{ matrix.runner }}
     needs:
       - build
     if: needs.build.outputs.e2e-changed == 'true' || contains(github.event.pull_request.labels.*.name, '🧪 pr/e2e-full')
     strategy:
       fail-fast: true
       matrix:
-        runner: [windows, macos, ubuntu]
+        runner:
+          - windows-latest
+          - macos-latest
+          - nscloud-ubuntu-22.04-amd64-8x16
         # Pinned 20 to 20.5.1 until https://github.com/nodejs/node/issues/49497 is released
         node: ["18", "20.5.1"]
         shard: ["1/2", "2/2"]
@@ -230,7 +229,7 @@ jobs:
             full_run: false
           - runner: windows
             full_run: false
-          - runner: ubuntu
+          - runner: nscloud-ubuntu-22.04-amd64-8x16
             node: "20"
             full_run: false
     steps:
@@ -263,11 +262,11 @@ jobs:
         working-directory: tools/hangar
         run: |
           pnpm test:generate
-          pnpm run test --shard=${{ matrix.shard }} --update=${{ matrix.runner == 'ubuntu' && matrix.node == '18' }}
+          pnpm run test --shard=${{ matrix.shard }} --update=${{ matrix.runner == 'nscloud-ubuntu-22.04-amd64-8x16' && matrix.node == '18' }}
 
       - name: Create mutation if needed
         # we only care about the diff in our standard dev env
-        if: matrix.runner == 'ubuntu' && matrix.node == '18'
+        if: matrix.runner == 'nscloud-ubuntu-22.04-amd64-8x16' && matrix.node == '18'
         id: diff
         env:
           RAW_SHARD: ${{ matrix.shard }}
@@ -276,7 +275,7 @@ jobs:
           scripts/create_patch.sh "e2e-$SHARD.diff"
 
       - name: Upload mutation
-        if: matrix.runner == 'ubuntu' && matrix.node == '18' && steps.diff.outputs.diff == 'true'
+        if: matrix.runner == 'nscloud-ubuntu-22.04-amd64-8x16' && matrix.node == '18' && steps.diff.outputs.diff == 'true'
         uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.diff.outputs.diff_name }}
