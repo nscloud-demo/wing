@@ -69,6 +69,8 @@ jobs:
           # Don't save cache here, to avoid thrashing with test job
           save-if: false
 
+      - uses: hashicorp/setup-terraform@v2
+
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
