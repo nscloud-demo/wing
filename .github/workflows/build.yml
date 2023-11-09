@@ -88,10 +88,11 @@ jobs:
           GENERATE_VERSION: ${{ github.event_name != 'push' || github.repository != 'winglang/wing' }}
         run: pnpm bump-pack
 
-
       - name: Debug
         run: |
+          pnpm install --global cdktf-cli@0.17.0
           which cdktf
+          cdktf --version
 
       - name: Build and Package
         run: pnpm package:ci
