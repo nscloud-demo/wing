@@ -88,6 +88,11 @@ jobs:
           GENERATE_VERSION: ${{ github.event_name != 'push' || github.repository != 'winglang/wing' }}
         run: pnpm bump-pack
 
+
+      - name: Debug
+        run: |
+          which cdktf
+
       - name: Build and Package
         run: pnpm package:ci
         env:
